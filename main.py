@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import streamlit as st
+import plotly.express as px
 import gdown
 
 # Set the page configuration for better UI
@@ -15,13 +16,16 @@ st.set_page_config(
     initial_sidebar_state='expanded'
 )
 
-# Google Drive model file ID
+# Working directory setup
+working_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Google Drive model file ID (replace with your model's drive ID)
 GDRIVE_FILE_ID = '1pexWEDB_n8NzmKQkz16-Ktd5YDH2i3Ag'
 
 # Function to download the model from Google Drive if not already present
 @st.cache_resource
 def download_model():
-    model_path = 'plant_disease_prediction_model.h5'
+    model_path = os.path.join(working_dir, 'plant_disease_prediction_model.h5')
     if not os.path.exists(model_path):
         with st.spinner('Downloading model...'):
             url = f'https://drive.google.com/uc?id={GDRIVE_FILE_ID}'
@@ -45,17 +49,12 @@ with open(class_indices_path, 'r') as f:
 # Convert class_indices keys to integers for indexing
 index_to_class = {int(k): v for k, v in class_indices.items()}
 
-# Function to Load and Preprocess the Image using Pillow
+# Function to Load and Preprocess the Image
 def load_and_preprocess_image(image_path, target_size=(224, 224)):
-    # Load the image
     img = Image.open(image_path).convert('RGB')
-    # Resize the image
     img = img.resize(target_size)
-    # Convert the image to a numpy array
     img_array = np.array(img)
-    # Add batch dimension
     img_array = np.expand_dims(img_array, axis=0)
-    # Scale the image values to [0, 1]
     img_array = img_array.astype('float32') / 255.
     return img_array
 
@@ -124,8 +123,6 @@ with tab1:
                 'Probability': probabilities * 100
             })
 
-            # Use Plotly for an interactive bar chart
-            import plotly.express as px
             fig = px.bar(
                 prob_df,
                 x='Disease',
@@ -136,16 +133,15 @@ with tab1:
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            # Display additional information about the predicted disease
+            # Expanded disease information
             st.subheader('Disease Information')
             disease_info = {
-                'Healthy': 'The plant is healthy. No action is needed.',
-                'Bacterial Blight': 'Bacterial blight is a disease caused by bacteria. Control measures include...',
-                'Leaf Rust': 'Leaf rust is a fungal disease. Control measures include...',
-                'Powdery Mildew': 'Powdery mildew is a fungal disease. Control measures include...',
-                # Add information for other diseases
+                'Healthy': 'The plant is healthy. No treatment is needed.',
+                'Bacterial Blight': 'A bacterial disease causing lesions on leaves. Treatment includes copper-based sprays and removing infected plant parts.',
+                'Leaf Rust': 'A fungal disease causing orange-brown pustules. Treatment involves fungicides and improving air circulation.',
+                'Powdery Mildew': 'A fungal disease with white powdery spots. Treatment includes sulfur sprays and reducing humidity.',
             }
-            st.write(disease_info.get(prediction, "Information not available."))
+            st.write(disease_info.get(prediction, "Detailed information not available."))
 
     else:
         st.info('Please upload an image to classify.')
@@ -161,10 +157,11 @@ with tab2:
     3. Click **Classify Image** to see the prediction.
 
     **Model Information:**
-    - Trained on a dataset of plant leaf images.
-    - Uses a convolutional neural network architecture.
+    - Trained on a comprehensive dataset of plant leaf images
+    - Uses state-of-the-art convolutional neural network architecture
+    - Supports multiple plant disease classifications
 
-    **Disclaimer:** This tool is for informational purposes and should not replace professional advice.
+    **Disclaimer:** This tool is for informational purposes and should not replace professional agricultural advice.
     """)
 
 # Footer with custom styling
@@ -176,6 +173,6 @@ footer {
 </style>
 <div style='text-align: center; padding: 10px;'>
     <hr>
-    © 2023 <a href='https://yourwebsite.com' target='_blank'>Mohamed Hany</a> • <a href='mailto:your.email@example.com'>Contact</a>
+    © 2024 Plant Disease Classifier • <a href='mailto:contact@plantdiseaseapp.com'>Contact</a>
 </div>
 """, unsafe_allow_html=True)
