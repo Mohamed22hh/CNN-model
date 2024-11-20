@@ -1,11 +1,11 @@
 import os
 import json
 from PIL import Image
-
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 import streamlit as st
+import gdown
 
 # Set the page configuration for better UI
 st.set_page_config(
@@ -15,20 +15,27 @@ st.set_page_config(
     initial_sidebar_state='expanded'
 )
 
-# Load the pre-trained model using caching for performance
+# Google Drive model file ID
+GDRIVE_FILE_ID = '1pexWEDB_n8NzmKQkz16-Ktd5YDH2i3Ag'
+
+# Function to download the model from Google Drive if not already present
 @st.cache_resource
-def load_model(model_path):
-    model = tf.keras.models.load_model(model_path)
-    return model
+def download_model():
+    model_path = 'plant_disease_prediction_model.h5'
+    if not os.path.exists(model_path):
+        with st.spinner('Downloading model...'):
+            url = f'https://drive.google.com/uc?id={GDRIVE_FILE_ID}'
+            gdown.download(url, model_path, quiet=False)
+    return model_path
 
-# Use os.getcwd() if __file__ is not defined
-try:
-    working_dir = os.path.dirname(os.path.abspath(__file__))
-except NameError:
-    working_dir = os.getcwd()
+# Function to load the model
+@st.cache_resource
+def load_model():
+    model_path = download_model()
+    return tf.keras.models.load_model(model_path)
 
-model_path = os.path.join(working_dir, "trained_model", "plant_disease_prediction_model.h5")
-model = load_model(model_path)
+# Load the model
+model = load_model()
 
 # Load the class names
 class_indices_path = os.path.join(working_dir, "class_indices.json")
